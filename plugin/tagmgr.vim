@@ -1,5 +1,5 @@
 function! s:tags_file_path() abort
-    return get(b:, 'tagmgr_tags_file', '')
+    return split(&tags, ',')[0]
 endfunction
 
 function! s:run_command(command)
