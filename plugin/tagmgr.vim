@@ -15,7 +15,7 @@ function! s:run_command(command)
 endfunction
 
 function! s:ctags_cmd_base() abort
-    let cmd = 'ctags --c++-kinds=+p --fields=+iaS --extra=+q '
+    let cmd = 'ctags --c-kinds=+plx --c++-kinds=+plx --java-kinds=+l --fields=+iaS --extra=+q '
 
     if get(b:, 'tagmgr_recurse_dirs')
         let cmd .= '-R '
