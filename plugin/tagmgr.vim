@@ -21,6 +21,8 @@ function! s:ctags_cmd_base() abort
         let cmd .= '-R '
     endif
 
+    let cmd .= '--languages=' . join(get(b:, 'tagmgr_languages', ['C', 'C++']), ',') . ' '
+
     return cmd
 endfunction
 
