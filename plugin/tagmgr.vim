@@ -126,5 +126,5 @@ command! -nargs=0 TagsErase call tagmgr#erase()
 
 augroup tagmgr
     autocmd!
-    autocmd BufWritePost *.cpp,*.cc,*.h,*.c call tagmgr#update_one()
+    autocmd BufWritePost * call tagmgr#update_one()
 augroup END
