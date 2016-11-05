@@ -4,7 +4,7 @@ let s:language_map['C++']  = ['*.cpp', '*.cc', '*.hpp']
 let s:language_map['Java'] = ['*.java']
 
 function! s:tags_file_path() abort
-    return split(&tags, ',')[0]
+    return split(&tags, ',', 1)[0]
 endfunction
 
 function! s:language_list() abort
