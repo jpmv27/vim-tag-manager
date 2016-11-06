@@ -15,6 +15,10 @@ function! s:subdirs_list() abort
     return get(b:, 'tagmgr_src_subdirs', [''])
 endfunction
 
+function! s:spellfile() abort
+    return get(b:, 'tagmgr_spell_file', '')
+endfunction
+
 function! s:run_command(command)
     let log = system(a:command)
     if v:shell_error == 0
@@ -70,6 +74,44 @@ function! s:matches_language(file) abort
     return 0
 endfunction
 
+function! s:generate_tag_file(name) abort
+    let cmd = s:ctags_cmd_base() . '-f ' . a:name . ' '
+
+    for d in s:subdirs_list()
+        let cmd .= simplify(fnameescape(getcwd() . '/' . d) . '/*') . ' '
+    endfor
+
+    call s:run_command(cmd)
+endfunction
+
+function! s:maybe_update_tag_file(file, tags)
+    let temp = a:tags . '.tmp'
+
+    if !s:belongs_to_dir(a:file) || !s:matches_language(a:file)
+        return
+    endif
+
+    let cmd = 'sed "/' . escape(a:file, './') . '/d" ' . a:tags . ' > ' . temp
+    let cmd .= '; ' . s:ctags_cmd_base() . '-a -f ' . temp . ' ' . a:file
+    let cmd .= '; mv ' . temp . ' ' . a:tags
+
+    call s:run_command(cmd)
+endfunction
+
+function! s:maybe_generate_spell_file(tags) abort
+    let spell = s:spellfile()
+
+    if spell ==# ''
+        return
+    endif
+
+    let cmd = "grep -v '^!' " . a:tags
+    let cmd .= "| awk '{ print $1 \"/=\" }' > " . spell
+
+    call s:run_command(cmd)
+    execute 'silent mkspell! ' . spell
+endfunction
+
 function! tagmgr#update() abort
     let tags = s:tags_file_path()
     if tags ==# ''
@@ -77,13 +119,9 @@ function! tagmgr#update() abort
         return
     endif
 
-    let cmd = s:ctags_cmd_base() . '-f ' . tags . ' '
+    call s:generate_tag_file(tags)
 
-    for d in s:subdirs_list()
-        let cmd .= simplify(fnameescape(getcwd() . '/' . d) . '/*') . ' '
-    endfor
-
-    call s:run_command(cmd)
+    call s:maybe_generate_spell_file(tags)
 endfunction
 
 function! tagmgr#erase() abort
@@ -105,19 +143,9 @@ function! tagmgr#update_one() abort
         return
     endif
 
-    let temp = tags . '.tmp'
+    call s:maybe_update_tag_file(resolve(fnameescape(expand('%:p'))), tags)
 
-    let file = resolve(fnameescape(expand('%:p')))
-
-    if !s:belongs_to_dir(file) || !s:matches_language(file)
-        return
-    endif
-
-    let cmd = 'sed "/' . escape(file, './') . '/d" ' . tags . ' > ' . temp
-    let cmd .= '; ' . s:ctags_cmd_base() . '-a -f ' . temp . ' ' . file
-    let cmd .= '; mv ' . temp . ' ' . tags
-
-    call s:run_command(cmd)
+    call s:maybe_generate_spell_file(tags)
 endfunction
 
 command! -nargs=0 TagsUpdate call tagmgr#update()
