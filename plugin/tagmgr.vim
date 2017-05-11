@@ -19,6 +19,10 @@ function! s:spellfile() abort
     return get(b:, 'tagmgr_spell_file', '')
 endfunction
 
+function! s:spell_is_rare() abort
+    return get(b:, 'tagmgr_spell_rare') != 0
+endfunction
+
 function! s:run_command(command)
     let log = system(a:command)
     if v:shell_error == 0
@@ -105,10 +109,16 @@ function! s:maybe_generate_spell_file(tags) abort
         return
     endif
 
-    let cmd = "grep -v '^!' " . a:tags
-    let cmd .= "| awk '{ print $1 \"/=\" }' > " . spell
+    call writefile(['RARE ?', 'MIDWORD _:'], spell . '.aff')
 
+    call writefile(['9999'], spell . '.dic')
+
+    let flags = s:spell_is_rare() ? '?' : ''
+
+    let cmd = "grep -v '^!' " . a:tags
+    let cmd .= "| awk '{ print $1 \"/" . flags . "\" }' >> " . spell . '.dic'
     call s:run_command(cmd)
+
     execute 'silent mkspell! ' . spell
 endfunction
 
