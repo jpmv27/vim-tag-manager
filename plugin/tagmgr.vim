@@ -19,7 +19,7 @@ function! s:spellfile() abort
     return get(b:, 'tagmgr_spell_file', '')
 endfunction
 
-function! s:spell_is_rare() abort
+function! s:spell_make_rare() abort
     return get(b:, 'tagmgr_spell_rare') != 0
 endfunction
 
@@ -36,7 +36,7 @@ function! s:run_command(command)
 endfunction
 
 function! s:ctags_cmd_base() abort
-    let cmd = 'ctags --fields=+ianS --extra=+q --excmd=number '
+    let cmd = 'ctags --fields=+ianS --extras=+q --excmd=number '
 
     if get(b:, 'tagmgr_recurse_dirs')
         let cmd .= '-R '
@@ -109,17 +109,7 @@ function! s:maybe_generate_spell_file(tags) abort
         return
     endif
 
-    call writefile(['RARE ?', 'MIDWORD _:'], spell . '.aff')
-
-    call writefile(['9999'], spell . '.dic')
-
-    let flags = s:spell_is_rare() ? '?' : ''
-
-    let cmd = "grep -v '^!' " . a:tags
-    let cmd .= "| awk '{ print $1 \"/" . flags . "\" }' >> " . spell . '.dic'
-    call s:run_command(cmd)
-
-    execute 'silent mkspell! ' . spell
+    execute 'Tags2Spell! ' . (s:spell_make_rare() ? '-rare ' : ' ') . spell . ' ' . a:tags
 endfunction
 
 function! tagmgr#update() abort
